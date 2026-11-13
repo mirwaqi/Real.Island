@@ -1,242 +1,55 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RADIOMEGA</title>
-<style>
-:root{--bg:#0a0a0a;--pan:#171717;--red:#e10600;--tx:#f1f1f1;--mu:#8d8d8d;--ln:#2e2e2e}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 "Trebuchet MS",Arial,sans-serif}
-header{background:#000;border-bottom:4px solid var(--red);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.logo{font:900 30px Impact,"Arial Black",sans-serif;color:var(--red);letter-spacing:2px;cursor:pointer;transform:rotate(-1.5deg)}
-#user{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px}
-main{max-width:760px;margin:0 auto;padding:18px 14px}
-button,label.b{font:bold 14px Arial,sans-serif;text-transform:uppercase;background:var(--red);color:#000;border:2px solid var(--red);padding:8px 14px;cursor:pointer;display:inline-block}
-button:hover,label.b:hover{background:#000;color:var(--red)}
-button.g{background:none;color:var(--tx);border-color:var(--mu)}
-button.g:hover{border-color:var(--red);color:var(--red)}
-input[type=text],input[type=password]{width:100%;font-size:16px;padding:10px;background:#000;color:var(--tx);border:2px solid var(--ln);margin:4px 0 8px;border-radius:0}
-input:focus{outline:none;border-color:var(--red)}
-h2{font:900 24px Impact,"Arial Black",sans-serif;text-transform:uppercase;margin:0;border-bottom:3px solid var(--red);display:inline-block;padding-bottom:2px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.st{display:flex;gap:12px;align-items:center;padding:10px;margin-bottom:6px;background:var(--pan);border-left:6px solid var(--red);cursor:pointer}
-.st:hover{background:#222}
-.n{font:900 22px Impact,sans-serif;color:var(--red);width:34px}
-.th{width:58px;height:58px;flex:none;background:#000 center/cover;border:2px solid var(--ln);display:flex;align-items:center;justify-content:center;font-size:24px}
-.th.big{width:140px;height:140px;font-size:56px;border-color:var(--red)}
-.nm{font-size:20px;font-weight:bold}.au{font-size:14px;color:var(--mu)}.au b{color:var(--tx)}
-.ck{display:inline-block;width:15px;height:15px;border-radius:50%;background:#22c55e;color:#000;font:bold 10px/15px sans-serif;text-align:center;margin:0 4px;vertical-align:1px}
-small{color:var(--mu);font-size:11px}
-.av{position:relative;width:32px;height:32px;background:var(--red);color:#000;display:inline-flex;align-items:center;justify-content:center;font:900 17px Impact,sans-serif}
-.av i{position:absolute;right:-6px;bottom:-6px;width:15px;height:15px;border-radius:50%;background:#22c55e;color:#000;font:bold 10px/15px sans-serif;text-align:center}
-.hero{display:flex;gap:16px;align-items:flex-end;margin:16px 0;flex-wrap:wrap}
-.box{background:var(--pan);border:2px solid var(--ln);padding:14px;margin:12px 0}.box.s{max-width:380px;margin:26px auto}
-.sg{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--ln)}
-.sg .th{width:44px;height:44px;font-size:18px}.sg .t{flex:1;min-width:0}.sg .t div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mu{color:var(--mu)}.err{color:#ff5a52;min-height:20px;font-size:14px}.ok{color:#22c55e}
-#pl{position:fixed;left:0;right:0;bottom:0;background:#000;border-top:4px solid var(--red);display:none;z-index:5}
-#bar{display:flex;gap:10px;align-items:center;padding:8px 12px}
-#bar .th{width:50px;height:50px;border-color:var(--red)}#bar .t{flex:1;min-width:0;font-weight:bold}
-#bar .t div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#viz{display:block;width:100%;height:76px;background:#000}
-#bar .th{transition:transform .05s}
-#jg{position:fixed;inset:0;background:#000 repeating-linear-gradient(0deg,#ffffff12 0 2px,transparent 2px 5px);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:9;padding:20px}
-#jg.on{display:flex;animation:sc .3s steps(3) infinite}
-@keyframes sc{0%{background-position:0 0}100%{background-position:0 9px}}
-#jl{font:bold 16px "Courier New",monospace;color:#fff;letter-spacing:4px;margin-bottom:18px;animation:bl 1s steps(2) infinite}
-@keyframes bl{50%{opacity:.25}}
-#jt{font:900 clamp(34px,10vw,84px) Impact,sans-serif;color:var(--red);min-height:1.1em}
-</style></head><body>
-<header><div class="logo" data-a="home">RADIOMEGA</div><div id="user"></div></header>
-<main id="app"></main>
-<div id="pl"><canvas id="viz"></canvas><div id="emb"></div><div id="bar"></div></div>
-<div id="jg"><div id="jl">● ON AIR · RADIOMEGA</div><div id="jt"></div></div>
-<script>
-const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const LN=["ru","uk","en","de","fr","es","pt"],NAMES=["Русский","Українська","English","Deutsch","Français","Español","Português"],SP=["ru-RU","uk-UA","en-US","de-DE","fr-FR","es-ES","pt-BR"];
-let lang=localStorage.getItem('rm_lang')||'',LI=lang?LN.indexOf(lang):2;
-const D={
-login:["Войти","Увійти","Log in","Anmelden","Se connecter","Iniciar sesión","Entrar"],
-logout:["Выйти","Вийти","Log out","Abmelden","Déconnexion","Salir","Sair"],
-newacc:["Новый аккаунт","Новий акаунт","New account","Neues Konto","Nouveau compte","Cuenta nueva","Nova conta"],
-account:["Аккаунт","Акаунт","Account","Konto","Compte","Cuenta","Conta"],
-name:["Имя","Ім’я","Name","Name","Nom","Nombre","Nome"],
-pass:["Пароль, от 4 символов","Пароль, від 4 символів","Password, 4+ characters","Passwort, mind. 4 Zeichen","Mot de passe, 4 caractères min.","Contraseña, mín. 4 caracteres","Senha, mín. 4 caracteres"],
-creator:["(создатель приложения радио)","(творець застосунку радіо)","(creator of the radio app)","(Ersteller der Radio-App)","(créateur de l’appli radio)","(creador de la app de radio)","(criador do app de rádio)"],
-stations:["Радиостанции","Радіостанції","Radio stations","Radiosender","Stations de radio","Emisoras de radio","Estações de rádio"],
-create:["+ Создать радио","+ Створити радіо","+ Create radio","+ Radio erstellen","+ Créer une radio","+ Crear radio","+ Criar rádio"],
-search:["Поиск радио или автора...","Пошук радіо або автора...","Search radios or authors...","Radio oder Autor suchen...","Rechercher une radio ou un auteur...","Buscar radio o autor...","Buscar rádio ou autor..."],
-none:["Ничего не найдено.","Нічого не знайдено.","Nothing found.","Nichts gefunden.","Aucun résultat.","No se encontró nada.","Nada encontrado."],
-newradio:["Новое радио","Нове радіо","New radio","Neues Radio","Nouvelle radio","Radio nueva","Nova rádio"],
-limit:["На один аккаунт можно максимум 3 радио.","На один акаунт можна максимум 3 радіо.","Maximum 3 radios per account.","Maximal 3 Radios pro Konto.","Maximum 3 radios par compte.","Máximo 3 radios por cuenta.","Máximo de 3 rádios por conta."],
-radioname:["Название радио","Назва радіо","Radio name","Radioname","Nom de la radio","Nombre de la radio","Nome da rádio"],
-photo:["Фото радио:","Фото радіо:","Radio photo:","Radiofoto:","Photo de la radio :","Foto de la radio:","Foto da rádio:"],
-make:["Создать","Створити","Create","Erstellen","Créer","Crear","Criar"],
-cancel:["Отмена","Скасувати","Cancel","Abbrechen","Annuler","Cancelar","Cancelar"],
-back:["← Назад","← Назад","← Back","← Zurück","← Retour","← Atrás","← Voltar"],
-listen:["▶ Слушать","▶ Слухати","▶ Listen","▶ Hören","▶ Écouter","▶ Escuchar","▶ Ouvir"],
-stop:["■ Стоп","■ Стоп","■ Stop","■ Stopp","■ Arrêter","■ Parar","■ Parar"],
-addfile:["+ Файл с музыкой","+ Файл з музикою","+ Music file","+ Musikdatei","+ Fichier audio","+ Archivo de música","+ Arquivo de música"],
-delradio:["Удалить радио","Видалити радіо","Delete radio","Radio löschen","Supprimer la radio","Eliminar radio","Excluir rádio"],
-linkhint:["Или вставь ссылку на YouTube, YouTube Music или SoundCloud. Название и иконка подставятся сами.","Або встав посилання на YouTube, YouTube Music або SoundCloud. Назва та іконка підставляться самі.","Or paste a YouTube, YouTube Music or SoundCloud link. Title and icon are filled in automatically.","Oder füge einen YouTube-, YouTube-Music- oder SoundCloud-Link ein. Titel und Symbol werden automatisch ergänzt.","Ou colle un lien YouTube, YouTube Music ou SoundCloud. Le titre et l’icône sont ajoutés automatiquement.","O pega un enlace de YouTube, YouTube Music o SoundCloud. El título y el icono se rellenan solos.","Ou cole um link do YouTube, YouTube Music ou SoundCloud. O título e o ícone são preenchidos automaticamente."],
-addlink:["Добавить по ссылке","Додати за посиланням","Add by link","Per Link hinzufügen","Ajouter par lien","Añadir por enlace","Adicionar por link"],
-owneronly:["Музыку добавляет только создатель радио.","Музику додає лише творець радіо.","Only the radio’s creator can add music.","Nur der Ersteller des Radios kann Musik hinzufügen.","Seul le créateur de la radio peut ajouter de la musique.","Solo el creador de la radio puede añadir música.","Só o criador da rádio pode adicionar músicas."],
-onair:["В эфире песен: ","У ефірі пісень: ","Songs on air: ","Songs im Programm: ","Chansons à l’antenne : ","Canciones en el aire: ","Músicas no ar: "],
-onair2:["Что играет сейчас, видно в плеере внизу.","Що грає зараз, видно в плеєрі внизу.","What’s playing now is shown in the player below.","Was gerade läuft, siehst du im Player unten.","Ce qui joue en ce moment s’affiche dans le lecteur en bas.","Lo que suena ahora se ve en el reproductor de abajo.","O que está tocando aparece no player abaixo."],
-nosongs:["Песен пока нет.","Пісень поки немає.","No songs yet.","Noch keine Songs.","Pas encore de chansons.","Aún no hay canciones.","Ainda não há músicas."],
-file:["файл","файл","file","Datei","fichier","archivo","arquivo"],
-next:["Дальше ▶▶","Далі ▶▶","Next ▶▶","Weiter ▶▶","Suivant ▶▶","Siguiente ▶▶","Próxima ▶▶"],
-finding:["Ищу название и иконку…","Шукаю назву та іконку…","Looking up title and icon…","Suche Titel und Symbol…","Recherche du titre et de l’icône…","Buscando título e icono…","Buscando título e ícone…"],
-uploading:["Загружаю ","Завантажую ","Uploading ","Lade hoch: ","Envoi de ","Subiendo ","Enviando "],
-nosongsalert:["В этом радио пока нет песен","У цьому радіо поки немає пісень","This radio has no songs yet","Dieses Radio hat noch keine Songs","Cette radio n’a pas encore de chansons","Esta radio aún no tiene canciones","Esta rádio ainda não tem músicas"],
-confirmdel:["Удалить радио и все песни?","Видалити радіо та всі пісні?","Delete the radio and all its songs?","Radio und alle Songs löschen?","Supprimer la radio et toutes ses chansons ?","¿Eliminar la radio y todas sus canciones?","Excluir a rádio e todas as músicas?"],
-down:["Сервер не запущен. Закрой это окно и запусти RADIOMEGA через start.bat","Сервер не запущено. Закрий це вікно та запусти RADIOMEGA через start.bat","Server not running. Close this window and start RADIOMEGA with start.bat","Server läuft nicht. Schließe dieses Fenster und starte RADIOMEGA mit start.bat","Serveur non démarré. Ferme cette fenêtre et lance RADIOMEGA avec start.bat","El servidor no está en marcha. Cierra esta ventana e inicia RADIOMEGA con start.bat","Servidor não iniciado. Feche esta janela e inicie o RADIOMEGA com start.bat"],
-say:["Радио Мега. Следующая песня.","Радіо Мега. Наступна пісня.","Radio Mega. Next song.","Radio Mega. Nächster Song.","Radio Mega. Chanson suivante.","Radio Mega. Siguiente canción.","Rádio Mega. Próxima música."],
-asktitle:["Не удалось получить название автоматически. Введи название песни:","Не вдалося отримати назву автоматично. Введи назву пісні:","Couldn’t get the title automatically. Enter the song title:","Titel konnte nicht automatisch geladen werden. Gib den Songtitel ein:","Impossible d’obtenir le titre automatiquement. Saisis le titre de la chanson :","No se pudo obtener el título automáticamente. Escribe el título de la canción:","Não foi possível obter o título automaticamente. Digite o título da música:"],
-rename:["Новое название песни:","Нова назва пісні:","New song title:","Neuer Songtitel:","Nouveau titre de la chanson :","Nuevo título de la canción:","Novo título da música:"],
-noplay:["Плеер не загрузился: нет доступа к сайту или он не разрешает встраивание (бывает, когда страница открыта как файл). Добавь песню файлом.","Плеєр не завантажився: немає доступу до сайту або він забороняє вбудовування (буває, коли сторінку відкрито як файл). Додай пісню файлом.","The player didn’t load: the site is unreachable or doesn’t allow embedding (happens when the page is opened as a file). Add the song as a file instead.","Der Player wurde nicht geladen: Seite nicht erreichbar oder Einbettung nicht erlaubt (passiert, wenn die Seite als Datei geöffnet wird). Füge den Song stattdessen als Datei hinzu.","Le lecteur ne s’est pas chargé : site inaccessible ou intégration refusée (cela arrive quand la page est ouverte comme fichier). Ajoute plutôt la chanson en fichier.","El reproductor no cargó: sitio inaccesible o no permite incrustación (pasa si la página se abre como archivo). Añade la canción como archivo.","O player não carregou: site inacessível ou sem permissão de incorporação (acontece quando a página é aberta como arquivo). Adicione a música como arquivo."],
-e_big:["Файл слишком большой","Файл завеликий","File too large","Datei zu groß","Fichier trop volumineux","Archivo demasiado grande","Arquivo muito grande"],
-e_login_first:["Сначала войди в аккаунт","Спочатку увійди в акаунт","Please log in first","Bitte zuerst anmelden","Connecte-toi d’abord","Inicia sesión primero","Entre na sua conta primeiro"],
-e_bad_creds:["Имя 2–20 символов, пароль от 4","Ім’я 2–20 символів, пароль від 4","Name 2–20 characters, password 4+","Name 2–20 Zeichen, Passwort mind. 4","Nom 2–20 caractères, mot de passe 4 min.","Nombre 2–20 caracteres, contraseña mín. 4","Nome 2–20 caracteres, senha mín. 4"],
-e_name_taken:["Такое имя уже занято","Таке ім’я вже зайняте","This name is already taken","Dieser Name ist schon vergeben","Ce nom est déjà pris","Ese nombre ya está en uso","Esse nome já está em uso"],
-e_too_many:["Слишком много попыток. Подожди 10 минут","Забагато спроб. Зачекай 10 хвилин","Too many attempts. Wait 10 minutes","Zu viele Versuche. Warte 10 Minuten","Trop de tentatives. Attends 10 minutes","Demasiados intentos. Espera 10 minutos","Muitas tentativas. Aguarde 10 minutos"],
-e_wrong_creds:["Неверное имя или пароль","Невірне ім’я або пароль","Wrong name or password","Falscher Name oder falsches Passwort","Nom ou mot de passe incorrect","Nombre o contraseña incorrectos","Nome ou senha incorretos"],
-e_enter_name:["Введи название","Введи назву","Enter a name","Name eingeben","Saisis un nom","Escribe un nombre","Digite um nome"],
-e_max3:["Максимум 3 радио на один аккаунт","Максимум 3 радіо на один акаунт","Maximum 3 radios per account","Maximal 3 Radios pro Konto","Maximum 3 radios par compte","Máximo 3 radios por cuenta","Máximo de 3 rádios por conta"],
-e_no_radio:["Радио не найдено","Радіо не знайдено","Radio not found","Radio nicht gefunden","Radio introuvable","Radio no encontrada","Rádio não encontrada"],
-e_not_yours:["Это не твоё радио","Це не твоє радіо","This isn’t your radio","Das ist nicht dein Radio","Ce n’est pas ta radio","Esta no es tu radio","Esta não é a sua rádio"],
-e_bad_link:["Не получилось взять название и иконку. Нужна ссылка на YouTube, YouTube Music или SoundCloud.","Не вдалося взяти назву та іконку. Потрібне посилання на YouTube, YouTube Music або SoundCloud.","Couldn’t get the title and icon. Use a YouTube, YouTube Music or SoundCloud link.","Titel und Symbol konnten nicht geladen werden. Nutze einen YouTube-, YouTube-Music- oder SoundCloud-Link.","Impossible de récupérer le titre et l’icône. Utilise un lien YouTube, YouTube Music ou SoundCloud.","No se pudo obtener el título y el icono. Usa un enlace de YouTube, YouTube Music o SoundCloud.","Não foi possível obter o título e o ícone. Use um link do YouTube, YouTube Music ou SoundCloud."],
-e_no_file:["Нет файла","Немає файлу","No file","Keine Datei","Aucun fichier","Sin archivo","Sem arquivo"],
-e_forbidden:["Нельзя","Не можна","Not allowed","Nicht erlaubt","Interdit","No permitido","Não permitido"]};
-const t=k=>{const a=D[k];return a?(a[LI]||a[2]):k},tr=m=>D['e_'+m]?t('e_'+m):m;
-let tk=localStorage.getItem('rm_tk')||'',me=null,view='home',cur=null,qv='',qt=0,playing=null,pr=null,queue=[],qi=0,busy=0,ac=null,ya=0;const audio=new Audio();
-/*LOCAL-BACKEND*/
-// Всё хранится в браузере этого устройства (IndexedDB). Сервер не нужен.
-let DB;const uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
-const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open('radiomega-local',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('users',{keyPath:'key'});d.createObjectStore('radios',{keyPath:'id'});d.createObjectStore('songs',{keyPath:'id'});d.createObjectStore('files',{keyPath:'name'})};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
-const dtx=(s,m,f)=>new Promise((ok,no)=>{const x=DB.transaction(s,m),q=f(x.objectStore(s));x.oncomplete=()=>ok(q&&q.result);x.onerror=()=>no(x.error)});
-const dbget=(s,k)=>dtx(s,'readonly',o=>o.get(k)),dball=s=>dtx(s,'readonly',o=>o.getAll()),dbset=(s,v)=>dtx(s,'readwrite',o=>o.put(v)),dbdel=(s,k)=>dtx(s,'readwrite',o=>o.delete(k));
-async function sha(s){if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('rm:'+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}let q=5381;for(const c of 'rm:'+s)q=(q*33)^c.charCodeAt(0);return String(q>>>0)}
-async function init0(){DB=await idb();await dbset('users',{key:'radiomega',name:'RADIOMEGA',hash:await sha('4020')})}
-async function prep(list){for(const n of list){if(n&&!/^https?:/.test(n)&&!FU[n]){const r=await dbget('files',n);if(r)FU[n]=URL.createObjectURL(r.blob)}}}
-async function meta(link){const m=link.match(/(?:youtu\.be\/|[?&]v=|shorts\/)([\w-]{11})/);let kind,l2=link,cover=null,fb;
- if(m){kind='yt';l2='https://www.youtube.com/watch?v='+m[1];cover='https://img.youtube.com/vi/'+m[1]+'/hqdefault.jpg';fb='YouTube · '+m[1]}
- else if(/^https?:\/\/(www\.|m\.|on\.)?soundcloud\.com\//i.test(link)){kind='sc';try{fb=decodeURIComponent(link.split('?')[0].split('/').filter(Boolean).slice(2,4).join(' — ').replace(/-/g,' '))}catch(e){}fb=fb||'SoundCloud'}
- else throw new Error('bad_link');
- const get=async u=>{try{const c=new AbortController();setTimeout(()=>c.abort(),7000);return await(await fetch(u,{signal:c.signal})).json()}catch(e){return null}};
- let j=await get('https://noembed.com/embed?url='+encodeURIComponent(l2));
- if(!(j&&j.title))j=await get((kind==='yt'?'https://www.youtube.com/oembed?format=json&url=':'https://soundcloud.com/oembed?format=json&url=')+encodeURIComponent(l2));
- let title=fb;if(j&&j.title){title=String(j.title).slice(0,120);if(!cover)cover=j.thumbnail_url||null}
- return{kind,link:l2,title,cover}}
-async function api0(p,o={}){const m=o.m||'GET',u=new URL(p,'http://x'),seg=u.pathname.split('/').filter(Boolean),b=o.j||{};
- const ku=tk&&await dbget('users',tk),me_=ku?{key:tk,name:ku.name}:null,need=()=>{if(!me_)throw new Error('login_first')};
- if(m==='POST'&&(seg[0]==='register'||seg[0]==='login')){const name=String(b.name||'').trim(),pw=String(b.pw||''),key=name.toLowerCase(),h=await sha(pw),x=await dbget('users',key);
-  if(seg[0]==='register'){if(name.length<2||name.length>20||pw.length<4)throw new Error('bad_creds');if(x)throw new Error('name_taken');await dbset('users',{key,name,hash:h})}
-  else if(!x||x.hash!==h)throw new Error('wrong_creds');
-  return{token:key,me:{key,name:x?x.name:name}}}
- if(seg[0]==='me')return{me:me_};
- if(seg[0]==='upload'){need();const e=(o.h&&o.h['x-ext'])||'';const name=uid()+(/^\.[a-z0-9]{1,5}$/.test(e)?e:'.bin');await dbset('files',{name,blob:o.b});return{file:name}}
- if(seg[0]==='radios'&&!seg[1]){
-  if(m==='GET'){const q=(u.searchParams.get('q')||'').toLowerCase();const rs=(await dball('radios')).filter(r=>!q||(r.name+' '+r.an).toLowerCase().includes(q)).sort((a,b)=>b.t-a.t);await prep(rs.map(r=>r.photo));return{radios:rs}}
-  need();const name=String(b.name||'').trim().slice(0,40);if(!name)throw new Error('enter_name');
-  if((await dball('radios')).filter(r=>r.ak===me_.key).length>=3)throw new Error('max3');
-  const r={id:uid(),name,photo:b.photo||null,ak:me_.key,an:me_.name,t:Date.now()};await dbset('radios',r);return{radio:r}}
- if(seg[0]==='radios'){const r=await dbget('radios',seg[1]);if(!r)throw new Error('no_radio');const ss=()=>dball('songs').then(a=>a.filter(s=>s.rid===r.id).sort((a,b)=>a.t-b.t));
-  if(m==='GET'){const s=await ss();await prep([r.photo,...s.flatMap(x=>[x.cover,x.file])]);return{radio:r,songs:s}}
-  need();if(me_.key!==r.ak)throw new Error('not_yours');
-  if(m==='DELETE'){for(const s of await ss())await dbdel('songs',s.id);await dbdel('radios',r.id);return{}}
-  if(m==='POST'&&seg[2]==='songs'){let s;
-   if(b.link){const x=await meta(String(b.link).trim());s={kind:x.kind,link:x.link,title:x.title,cover:x.cover}}
-   else{if(!b.file)throw new Error('no_file');s={kind:'file',file:b.file,title:String(b.title||'—').slice(0,100),cover:null}}
-   s.id=uid();s.rid=r.id;s.t=Date.now();await dbset('songs',s);return{song:s}}}
- if(m==='PUT'&&seg[0]==='songs'){need();const s=await dbget('songs',seg[1]),r=s&&await dbget('radios',s.rid);if(!r||r.ak!==me_.key)throw new Error('forbidden');s.title=String(b.title||s.title).slice(0,120);await dbset('songs',s);return{}}
- if(m==='DELETE'&&seg[0]==='songs'){need();const s=await dbget('songs',seg[1]),r=s&&await dbget('radios',s.rid);if(!r||r.ak!==me_.key)throw new Error('forbidden');await dbdel('songs',s.id);return{}}
- throw new Error('forbidden')}
-/*END-LOCAL-BACKEND*/
-const api=async(...a)=>{try{return await api0(...a)}catch(e){throw e instanceof TypeError?new Error(t('down')):e}};
-const up=async f=>(await api('/upload',{m:'POST',b:f,h:{'x-ext':'.'+(f.name.split('.').pop()||'bin').toLowerCase()}})).file;
-const FU={},F=n=>/^https?:/.test(n)?n:(FU[n]||''),vid=l=>(l.match(/v=([\w-]{11})/)||[])[1],ico=s=>s.kind==='yt'?'▶':s.kind==='sc'?'☁':'♪';
-const who=(n,k)=>`<b>${esc(n)}</b>`+(k==='radiomega'?`<span class="ck">✓</span><small>${t('creator')}</small>`:'');
-const th=(s,r,c='')=>{const f=(s&&s.cover)||(s&&s.kind==='yt'&&vid(s.link)&&'https://img.youtube.com/vi/'+vid(s.link)+'/hqdefault.jpg')||(r&&r.photo);return `<div class="th ${c}"${f?` style="background-image:url('${F(f)}')"`:''}>${f?'':s?ico(s):'📻'}</div>`};
-const err=(t,ok)=>{const e=$('#err');if(e){e.textContent=t;e.className=ok?'err ok':'err'}};
-
-function bar(){const p=$('#pl');if(!playing){p.style.display='none';document.body.style.paddingBottom='';return}
- const s=queue[qi];p.style.display='block';
- $('#bar').innerHTML=`${th(s,pr)}<div class="t"><div>${esc(s.title)}</div><div><small>${esc(pr.name)}</small></div></div><button data-a="skip">${t('next')}</button><button class="g" data-a="stopb">■</button>`;
- document.body.style.paddingBottom=(p.offsetHeight+12)+'px'}
-async function start(rid){stop();const j=await api('/radios/'+rid);if(!j.songs.length){alert(t('nosongsalert'));return}
- pr=j.radio;playing=rid;queue=j.songs;qi=Math.floor(Math.random()*queue.length);playSong()}
-function loadJS(src,g,cb){if(g==='YT'){if(window.YT&&YT.Player)return cb();window.onYouTubeIframeAPIReady=cb;if(ya)return;ya=1}else if(window.SC)return cb();const s=document.createElement('script');s.src=src;if(g==='SC')s.onload=cb;document.head.appendChild(s)}
-let okp=0,wt=0;const warn=()=>{$('#emb').innerHTML='<div style="padding:10px;color:#ff5a52;font-size:14px">'+esc(t('noplay'))+'</div>'};
-const watch=()=>{okp=0;clearTimeout(wt);wt=setTimeout(()=>{if(!okp)warn()},9000)};
-function playSong(){busy=0;clearTimeout(wt);const s=queue[qi],e=$('#emb');audio.pause();e.innerHTML='';
- if(s.kind==='file'){setupAn();try{ac.resume()}catch(x){}audio.volume=0;audio.src=F(s.file);audio.play().catch(()=>{});fadeIn()}
- else if(s.kind==='yt'){watch();loadJS('https://www.youtube.com/iframe_api','YT',()=>{e.innerHTML='<div id="ytp"></div>';new YT.Player('ytp',{width:'100%',height:'180',videoId:vid(s.link),playerVars:{autoplay:1,playsinline:1},events:{onReady:x=>{okp=1;x.target.playVideo()},onStateChange:x=>{if(x.data===0)fin()},onError:()=>warn()}})})}
- else{watch();e.innerHTML=`<iframe id="scp" width="100%" height="120" style="border:0;display:block" allow="autoplay" src="https://w.soundcloud.com/player/?url=${encodeURIComponent(s.link)}&auto_play=true&visual=false"></iframe>`;loadJS('https://w.soundcloud.com/player/api.js','SC',()=>{const w=SC.Widget($('#scp'));w.bind(SC.Widget.Events.FINISH,fin);w.bind(SC.Widget.Events.READY,()=>{okp=1})})}
- bar();if(view==='radio')render()}
-async function fin(){if(!playing||busy)return;busy=1;const rid=playing;audio.pause();$('#emb').innerHTML='';await jingle();if(playing!==rid)return;
- try{const j=await api('/radios/'+rid);queue=j.songs}catch(e){}if(!queue.length){stop();return}if(qi>=queue.length)qi=0;qi=pick();playSong()}
-audio.onended=fin;
-const pick=()=>{if(queue.length<2)return 0;let n;do n=Math.floor(Math.random()*queue.length);while(n===qi);return n};
-let an=null,buf=null;
-function setupAn(){if(an||!/^https?:/.test(location.protocol))return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const src=ac.createMediaElementSource(audio);an=ac.createAnalyser();an.fftSize=512;src.connect(an);an.connect(ac.destination);buf=new Uint8Array(an.frequencyBinCount)}catch(e){an=null}}
-function fadeIn(){let v=0;const iv=setInterval(()=>{v+=.1;try{audio.volume=Math.min(1,v)}catch(e){}if(v>=1)clearInterval(iv)},150)}
-audio.ontimeupdate=()=>{const s=queue[qi];if(!playing||!s||s.kind!=='file'||!audio.duration)return;const left=audio.duration-audio.currentTime;if(left<2.5){try{audio.volume=Math.max(0,left/2.5)}catch(e){}}};
-// анимация баса: у файлов считается по реальному звуку, у YouTube/SoundCloud (чужой плеер) — имитация
-function draw(){requestAnimationFrame(draw);if(!playing)return;const cv=$('#viz'),x=cv.getContext('2d'),w=cv.width=cv.clientWidth,hh=cv.height=cv.clientHeight,s=queue[qi],N=33,v=[];
- if(s&&s.kind==='file'&&an){an.getByteFrequencyData(buf);for(let i=0;i<N;i++)v[i]=Math.pow(buf[i]/255,1.4)}
- else{const t=performance.now()/1000,beat=Math.pow(Math.abs(Math.sin(t*4.2)),3);for(let i=0;i<N;i++)v[i]=Math.min(1,beat*(1-i/N)*.9+Math.random()*.25*(1-i/N))}
- const bass=(v[0]+v[1]+v[2]+v[3])/4,bw=w/N;x.clearRect(0,0,w,hh);
- for(let i=0;i<N;i++){const a=v[Math.abs(i-16)],bh=Math.max(3,a*hh);x.fillStyle=Math.abs(i-16)<4?'#ff2a1f':'#e10600';x.fillRect(i*bw+2,hh-bh,bw-4,bh)}
- const t=$('#bar .th');if(t)t.style.transform=`scale(${1+bass*.28})`}
-draw();
-function stop(){playing=null;busy=0;clearTimeout(wt);audio.pause();audio.removeAttribute('src');$('#emb').innerHTML='';$('#jg').classList.remove('on');try{speechSynthesis.cancel()}catch(e){}bar();if(view==='radio')render()}
-function jingle(){return new Promise(res=>{const j=$('#jg'),T=$('#jt');j.classList.add('on');
- const fr=['T','TT','TTT','TTTT','TTTTT','TTTTT NE','TTTTT NEXT','NEXT S','NEXT SSS','NEXT SSSSOOO','NEXT SSSSOOOOONG'];let i=0;T.textContent=fr[0];
- const iv=setInterval(()=>{i++;if(i<fr.length)T.textContent=fr[i];else clearInterval(iv)},120);
- try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume();const t=ac.currentTime,n=ac.sampleRate*1.2,b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);
-  for(let k=0;k<n;k++)d[k]=Math.random()*2-1;
-  const s=ac.createBufferSource();s.buffer=b;const f=ac.createBiquadFilter();f.type='bandpass';f.Q.value=3;f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(3500,t+1);
-  const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.35,t+.15);g.gain.exponentialRampToValueAtTime(.0001,t+1.2);
-  s.connect(f);f.connect(g);g.connect(ac.destination);s.start(t);
-  [[659.25,1],[880,1.15],[1318.5,1.3]].forEach(([fq,at])=>{const o=ac.createOscillator(),og=ac.createGain();o.type='triangle';o.frequency.value=fq;og.gain.setValueAtTime(.0001,t+at);og.gain.exponentialRampToValueAtTime(.3,t+at+.02);og.gain.exponentialRampToValueAtTime(.0001,t+at+.7);o.connect(og);og.connect(ac.destination);o.start(t+at);o.stop(t+at+.8)})}catch(e){}
- setTimeout(()=>{try{const u=new SpeechSynthesisUtterance(t('say'));u.lang=SP[LI];u.rate=.95;u.pitch=.7;speechSynthesis.speak(u)}catch(e){}},600);
- setTimeout(()=>{clearInterval(iv);j.classList.remove('on');res()},3000)})}
-
-async function load(){try{const{radios}=await api('/radios?q='+encodeURIComponent(qv));
- $('#list').innerHTML=radios.map((r,i)=>`<div class="st" data-a="open" data-id="${r.id}"><div class="n">${String(i+1).padStart(2,'0')}</div>${th(null,r)}<div><div class="nm">${esc(r.name)}</div><div class="au">${who(r.an,r.ak)}</div></div></div>`).join('')||`<p class="mu">${t('none')}</p>`}catch(e){$('#list').textContent=tr(e.message)}}
-async function render(){const app=$('#app');
- $('#user').innerHTML=me?`<span class="av">${esc(me.name[0].toUpperCase())}${me.key==='radiomega'?'<i>✓</i>':''}</span><span>${who(me.name,me.key)}</span><button class="g" data-a="out">${t('logout')}</button>`:`<button data-a="auth">${t('login')}</button>`;
- $('#user').insertAdjacentHTML('beforeend',`<button class="g" data-a="lang">🌐 ${(lang||'en').toUpperCase()}</button>`);
- if(view==='lang')app.innerHTML=`<div class="box s"><h2>Language · Язык</h2><br>${LN.map((c,i)=>`<button style="display:block;width:100%;margin:6px 0" data-a="setlang" data-id="${c}">${NAMES[i]}</button>`).join('')}</div>`;
- else if(view==='auth')app.innerHTML=`<div class="box s"><h2>${t('account')}</h2><br><input type="text" id="un" placeholder="${t('name')}" maxlength="20"><input type="password" id="pw" placeholder="${t('pass')}"><div class="err" id="err"></div><button data-a="login">${t('login')}</button> <button class="g" data-a="reg">${t('newacc')}</button></div>`;
- else if(view==='new')app.innerHTML=`<div class="box s"><h2>${t('newradio')}</h2><p class="mu">${t('limit')}</p><input type="text" id="rn" placeholder="${t('radioname')}" maxlength="40"><p class="mu">${t('photo')}</p><input type="file" id="ph" accept="image/*"><div class="err" id="err"></div><br><button data-a="create">${t('make')}</button> <button class="g" data-a="home">${t('cancel')}</button></div>`;
- else if(view==='radio'){let j;try{j=await api('/radios/'+cur)}catch(e){view='home';return render()}
-  const r=j.radio,own=me&&me.key===r.ak;
-  app.innerHTML=`<button class="g" data-a="home">${t('back')}</button><div class="hero">${th(null,r,'big')}<div><h2>${esc(r.name)}</h2><div class="au">${who(r.an,r.ak)}</div><br><button data-a="play">${playing===r.id?t('stop'):t('listen')}</button></div></div>
-  ${own?`<div class="box"><label class="b">${t('addfile')}<input type="file" accept="audio/*" multiple hidden id="songs"></label> <button class="g" data-a="delr">${t('delradio')}</button><p class="mu">${t('linkhint')}</p><input type="text" id="ln" placeholder="https://..."><button data-a="addlink">${t('addlink')}</button><div class="err" id="err"></div></div>`:`<p class="mu">${t('owneronly')}</p>`}
-  <div>${!own?`<p class="mu">${t('onair')}${j.songs.length}. ${t('onair2')}</p>`:j.songs.map(s=>`<div class="sg">${th(s,r)}<div class="t"><div${own?` data-a="ren" data-id="${s.id}" style="cursor:pointer" title="✎"`:''}>${esc(s.title)}</div><small>${s.kind==='yt'?'youtube':s.kind==='sc'?'soundcloud':t('file')}${playing===r.id&&queue[qi]&&queue[qi].id===s.id?' ▶':''}</small></div>${own?`<button class="g" data-a="dels" data-id="${s.id}">✕</button>`:''}</div>`).join('')||`<p class="mu">${t('nosongs')}</p>`}</div>`}
- else{app.innerHTML=`<div class="row"><h2>${t('stations')}</h2><button data-a="new">${t('create')}</button></div><input type="text" id="q" placeholder="${t('search')}" value="${esc(qv)}"><div id="list"></div>`;load()}}
-document.addEventListener('input',e=>{if(e.target.id==='q'){qv=e.target.value;clearTimeout(qt);qt=setTimeout(load,250)}});
-document.addEventListener('click',async e=>{const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a,id=el.dataset.id;
- try{
- if(a==='home')view='home';
- else if(a==='open'){view='radio';cur=id}
- else if(a==='lang')view='lang';
- else if(a==='setlang'){lang=id;LI=LN.indexOf(id);localStorage.setItem('rm_lang',id);document.documentElement.lang=id;view='home';bar()}
- else if(a==='new')view=me?'new':'auth';
- else if(a==='auth')view='auth';
- else if(a==='out'){me=null;tk='';localStorage.removeItem('rm_tk');view='home'}
- else if(a==='reg'||a==='login'){const j=await api(a==='reg'?'/register':'/login',{m:'POST',j:{name:$('#un').value,pw:$('#pw').value}});tk=j.token;me=j.me;localStorage.setItem('rm_tk',tk);view='home'}
- else if(a==='create'){const f=$('#ph').files[0];await api('/radios',{m:'POST',j:{name:$('#rn').value,photo:f?await up(f):null}});view='home'}
- else if(a==='addlink'){err(t('finding'),1);await api(`/radios/${cur}/songs`,{m:'POST',j:{link:$('#ln').value}})}
- else if(a==='play'){if(playing===cur)stop();else await start(cur)}
- else if(a==='skip'){fin();return}
- else if(a==='stopb'){stop();return}
- else if(a==='ren'){const nt=(prompt(t('rename'),el.textContent)||'').trim();if(!nt)return;await api('/songs/'+id,{m:'PUT',j:{title:nt.slice(0,120)}})}
- else if(a==='dels')await api('/songs/'+id,{m:'DELETE'});
- else if(a==='delr'){if(!confirm(t('confirmdel')))return;if(playing===cur)stop();await api('/radios/'+cur,{m:'DELETE'});view='home'}
- }catch(x){err(tr(x.message));return}
- render()});
-document.addEventListener('change',async e=>{if(e.target.id==='songs'){try{for(const f of e.target.files){err(t('uploading')+f.name+'…',1);await api(`/radios/${cur}/songs`,{m:'POST',j:{file:await up(f),title:f.name.replace(/\.[^.]+$/,'')}})}}catch(x){err(tr(x.message));return}render()}});
-(async()=>{try{await init0()}catch(e){document.body.insertAdjacentHTML('afterbegin','<p style="color:#ff5a52;padding:10px">IndexedDB unavailable (private mode?)</p>')}try{me=(await api('/me')).me}catch(e){}document.documentElement.lang=lang||'en';if(!lang)view='lang';render()})();
-</script></body></html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111313">
+<meta name="description" content="Real.Island — музыка, заметки и быстрые настройки в одном островке для Windows.">
+<title>Real.Island — островок для Windows</title>
+<link rel="stylesheet" href="./style.css">
+<script src="./demo.js" defer></script>
+</head>
+<body>
+<header class="nav wrap">
+  <a class="brand" href="./"><span aria-hidden="true"></span>Real.Island</a>
+  <nav aria-label="Навигация"><a href="#demo">Демо</a><a href="#install">Установка</a></nav>
+  <a class="nav-download" href="./Real.Island.exe" download>Скачать <span aria-hidden="true">↘</span></a>
+</header>
+<main>
+<section class="hero wrap">
+  <div class="intro">
+    <p class="platform"><span></span> Приложение для Windows</p>
+    <h1>Всё под рукой.<br><em>В одном островке.</em></h1>
+    <p class="summary">Управляй музыкой, открывай приложения и держи важные заметки всего в одном клике от рабочего стола.</p>
+    <div class="actions"><a class="primary" href="./Real.Island.exe" download>Скачать для Windows <span aria-hidden="true">↓</span></a><a class="secondary" href="#demo">Попробовать демо</a></div>
+  </div>
+  <section class="preview" id="demo" aria-label="Интерактивное демо островка">
+    <div class="desk">
+      <div class="island">
+        <div class="island-top"><span class="cover" aria-hidden="true">♪</span><time>20:48</time><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
+        <div class="panels">
+          <div data-panel="music">
+            <h2>Ночной эфир</h2><p>Демо-плеер</p>
+            <button class="play" id="play" type="button" aria-pressed="true">Ⅱ <span>Пауза</span></button>
+          </div>
+          <div data-panel="notes" hidden><label for="note">Быстрая заметка</label><textarea id="note" placeholder="Запиши что-нибудь…" rows="2"></textarea></div>
+          <div data-panel="look" hidden><label for="glass">Прозрачность островка</label><input id="glass" type="range" min="0" max="60" value="16"><output id="percent" for="glass">16%</output></div>
+        </div>
+        <div class="tabs" aria-label="Разделы демо"><button type="button" data-tab="music" aria-pressed="true">Музыка</button><button type="button" data-tab="notes" aria-pressed="false">Заметки</button><button type="button" data-tab="look" aria-pressed="false">Вид</button></div>
+      </div>
+    </div>
+    <p class="caption">Интерактивный предпросмотр. Кнопки управляют демо на этой странице.</p>
+  </section>
+</section>
+<section class="install wrap" id="install">
+  <h2>Установка</h2>
+  <ol>
+    <li><strong>Скачай и открой Real.Island.exe</strong><p>Нажми «Запустить», чтобы попробовать островок.</p></li>
+    <li><strong>Оставь островок с собой</strong><p>Нажми «Установить», чтобы он появлялся при входе в Windows.</p></li>
+    <li><strong>Настрой под себя</strong><p>Открой островок и выбери цвет, прозрачность и скорость анимации. Удалить приложение можно в параметрах Windows.</p></li>
+  </ol>
+</section>
+</main>
+<footer class="wrap foot"><span class="brand"><span aria-hidden="true"></span>Real.Island</span><span>Windows 10 / 11</span></footer>
+</body>
+</html>
