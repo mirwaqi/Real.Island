@@ -7,7 +7,8 @@
 <meta name="description" content="Real.Island — музыка, заметки и быстрые настройки в одном островке для Windows.">
 <title>Real.Island — островок для Windows</title>
 <link rel="stylesheet" href="./style.css">
-<script src="./demo.js" defer></script>
+<link rel="stylesheet" href="./demo-ui.css?v=1">
+<script src="./demo.js?v=island-demo" defer></script>
 </head>
 <body>
 <header class="nav wrap">
@@ -25,20 +26,32 @@
   </div>
   <section class="preview" id="demo" aria-label="Интерактивное демо островка">
     <div class="desk">
-      <div class="island">
-        <div class="island-top"><span class="cover" aria-hidden="true">♪</span><time>20:48</time><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
-        <div class="panels">
-          <div data-panel="music">
-            <h2>Ночной эфир</h2><p>Демо-плеер</p>
-            <button class="play" id="play" type="button" aria-pressed="true">Ⅱ <span>Пауза</span></button>
+      <div class="island" data-state="music">
+        <button class="island-top" type="button" aria-expanded="true" aria-controls="island-panel" aria-label="Свернуть островок"><span class="cover" aria-hidden="true">♪</span><time>20:48</time><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button>
+        <div class="island-body" id="island-panel">
+          <div class="island-body-inner">
+            <div data-panel="music">
+              <h2 id="track-title">Ночной эфир</h2><p id="track-artist">Real.Island</p>
+              <div class="transport">
+                <button type="button" id="prev" aria-label="Предыдущий трек">⏮</button>
+                <button type="button" id="play" class="active" aria-label="Пауза">Ⅱ</button>
+                <button type="button" id="next" aria-label="Следующий трек">⏭</button>
+              </div>
+              <div class="player-footer"><span id="demo-date"></span><button id="settings" type="button">Настройки</button><button id="pause" type="button">Пауза</button></div>
+            </div>
+            <div class="settings-panel" data-panel="settings" hidden>
+              <div class="settings-main">
+                <section data-settings-page="home"><h2>Главная</h2><div class="quick"><button type="button" aria-pressed="true">Wi-Fi</button><button type="button" aria-pressed="true">Bluetooth</button></div><p class="weather">☁ Облачно · 5°</p></section>
+                <section data-settings-page="look" hidden><h2>Кастомизация</h2><label for="glass">Прозрачность</label><input id="glass" type="range" min="0" max="60" value="16"><output id="percent" for="glass">16%</output></section>
+                <section data-settings-page="notes" hidden><h2>Заметки</h2><textarea id="note" aria-label="Заметка" placeholder="Запиши что-нибудь…" rows="3"></textarea></section>
+              </div>
+              <nav class="settings-rail" aria-label="Разделы настроек"><button type="button" data-tab="home" aria-pressed="true">Главная</button><button type="button" data-tab="look" aria-pressed="false">Кастомизация</button><button type="button" data-tab="notes" aria-pressed="false">Заметки</button><button id="back-to-player" type="button">К плееру</button></nav>
+            </div>
           </div>
-          <div data-panel="notes" hidden><label for="note">Быстрая заметка</label><textarea id="note" placeholder="Запиши что-нибудь…" rows="2"></textarea></div>
-          <div data-panel="look" hidden><label for="glass">Прозрачность островка</label><input id="glass" type="range" min="0" max="60" value="16"><output id="percent" for="glass">16%</output></div>
         </div>
-        <div class="tabs" aria-label="Разделы демо"><button type="button" data-tab="music" aria-pressed="true">Музыка</button><button type="button" data-tab="notes" aria-pressed="false">Заметки</button><button type="button" data-tab="look" aria-pressed="false">Вид</button></div>
       </div>
     </div>
-    <p class="caption">Интерактивный предпросмотр. Кнопки управляют демо на этой странице.</p>
+    <p class="caption">Нажми на островок, чтобы свернуть его, или открой настройки. Это демо интерфейса без звука.</p>
   </section>
 </section>
 <section class="install wrap" id="updates">
