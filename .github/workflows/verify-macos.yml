@@ -14,7 +14,7 @@ jobs:
           SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.8-Source.zip
         run: |
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
-          echo '2bb46a3e8058ce8a96088ce27bae58eeef3daf9f2d1c83cf2c45c557b1fb78cc  source.zip' | shasum -a 256 -c
+          echo 'fb8a518b962708460f65a49d94531ba9e1fdf933e7d9b90ecac80956100e3a33  source.zip' | shasum -a 256 -c
           unzip -q source.zip
           set +e
           bash real-island-apple/build.sh > build.log 2>&1
