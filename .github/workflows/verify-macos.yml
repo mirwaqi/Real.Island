@@ -16,4 +16,11 @@ jobs:
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
           echo '79611aa2412ef6427f5a59f38315df691241376aeeec7b6ae8efdb12f3de2614  source.zip' | shasum -a 256 -c
           unzip -q source.zip
-          bash real-island-apple/build.sh
+          set +e
+          bash real-island-apple/build.sh > build.log 2>&1
+          build_status=$?
+          cat build.log
+          grep -Ei 'error:|failure|failed|executed|test run with' build.log | sort -u | head -30 | while IFS= read -r problem; do
+            echo "::notice::$problem"
+          done
+          exit "$build_status"
