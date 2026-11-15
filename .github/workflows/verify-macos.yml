@@ -11,10 +11,10 @@ jobs:
     steps:
       - name: Build and test the candidate ZIP
         env:
-          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.5-Source.zip
+          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.6-Source.zip
         run: |
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
-          echo '37333648ee8e9a9dfce05bd1741b9a66d697155014da09c9b635994d93fcfa94  source.zip' | shasum -a 256 -c
+          echo '39ae52e14b29ac587c8f13116389242cb7b73cd1832efe9f9dc29d7ce74ce2ca  source.zip' | shasum -a 256 -c
           unzip -q source.zip
           set +e
           bash real-island-apple/build.sh > build.log 2>&1
@@ -33,9 +33,9 @@ jobs:
           hdiutil verify "$image"
           hdiutil attach "$image" -nobrowse -readonly -mountpoint "$mount"
           /usr/bin/codesign --verify --deep --strict "$app_path"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.5
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.6
           test "$(/usr/bin/lipo -archs "$app_path/Contents/MacOS/RealIslandApple")" = arm64
-          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.5 and valid ad hoc signature."
+          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.6 and valid ad hoc signature."
           open -n "$app_path"
           pid=""
           for attempt in {1..10}; do
@@ -81,19 +81,19 @@ jobs:
           test -n "$window"
           echo "::notice::Window Server reports an on-screen Real.Island Apple panel."
           mkdir -p captures
-          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.5.png
-          test -s captures/Real.Island-Apple-0.1.5.png
+          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.6.png
+          test -s captures/Real.Island-Apple-0.1.6.png
           xcrun swift find-window.swift "$pid" click
           sleep 2
           expanded="$(xcrun swift find-window.swift "$pid" expanded)"
           if [[ -n "$expanded" ]]; then
-            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.5-expanded.png
+            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.6-expanded.png
             echo "::notice::Clicking the compact clock opened the actual app."
             xcrun swift find-window.swift "$pid" click-settings
             sleep 2
             settings="$(xcrun swift find-window.swift "$pid" settings)"
             if [[ -n "$settings" ]]; then
-              screencapture -x -o -l "$settings" captures/Real.Island-Apple-0.1.5-settings.png
+              screencapture -x -o -l "$settings" captures/Real.Island-Apple-0.1.6-settings.png
               echo "::notice::The settings button opened the actual settings panel."
             else
               echo "::warning::The runner could not open settings with a synthetic click."
