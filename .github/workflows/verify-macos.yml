@@ -11,10 +11,10 @@ jobs:
     steps:
       - name: Build and test the candidate ZIP
         env:
-          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.7-Source.zip
+          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.8-Source.zip
         run: |
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
-          echo '30f4ba72d3463b1f329d4aa48b2f124b241afc10f25b506c4ca77f8c4dfedcaf  source.zip' | shasum -a 256 -c
+          echo '2bb46a3e8058ce8a96088ce27bae58eeef3daf9f2d1c83cf2c45c557b1fb78cc  source.zip' | shasum -a 256 -c
           unzip -q source.zip
           set +e
           bash real-island-apple/build.sh > build.log 2>&1
@@ -33,9 +33,9 @@ jobs:
           hdiutil verify "$image"
           hdiutil attach "$image" -nobrowse -readonly -mountpoint "$mount"
           /usr/bin/codesign --verify --deep --strict "$app_path"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.7
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.8
           test "$(/usr/bin/lipo -archs "$app_path/Contents/MacOS/RealIslandApple")" = arm64
-          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.7 and valid ad hoc signature."
+          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.8 and valid ad hoc signature."
           open -n "$app_path"
           pid=""
           for attempt in {1..10}; do
@@ -59,7 +59,10 @@ jobs:
               let mode = CommandLine.arguments.last
               switch mode {
               case "expanded", "click-settings": return width == 276 && height == 74
-              case "settings": return width >= 330 && height >= 235
+              case "settings": return width == 346 && height == 235
+              case "reminders": return width == 346 && height == 254
+              case "playing": return width == 556 && height == 72
+              case "banner": return width == 276 && height == 62
               default: return width == 160 && height == 22
               }
           }
@@ -81,19 +84,19 @@ jobs:
           test -n "$window"
           echo "::notice::Window Server reports an on-screen Real.Island Apple panel."
           mkdir -p captures
-          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.7.png
-          test -s captures/Real.Island-Apple-0.1.7.png
+          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.8.png
+          test -s captures/Real.Island-Apple-0.1.8.png
           xcrun swift find-window.swift "$pid" click
           sleep 2
           expanded="$(xcrun swift find-window.swift "$pid" expanded)"
           if [[ -n "$expanded" ]]; then
-            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.7-expanded.png
+            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.8-expanded.png
             echo "::notice::Clicking the compact clock opened the actual app."
             xcrun swift find-window.swift "$pid" click-settings
             sleep 2
             settings="$(xcrun swift find-window.swift "$pid" settings)"
             if [[ -n "$settings" ]]; then
-              screencapture -x -o -l "$settings" captures/Real.Island-Apple-0.1.7-settings.png
+              screencapture -x -o -l "$settings" captures/Real.Island-Apple-0.1.8-settings.png
               echo "::notice::The settings button opened the actual settings panel."
             else
               echo "::warning::The runner could not open settings with a synthetic click."
@@ -101,8 +104,8 @@ jobs:
           else
             echo "::warning::The runner could not verify expanding the panel with a synthetic click."
           fi
-          test -s captures/Real.Island-Apple-0.1.7-expanded.png
-          test -s captures/Real.Island-Apple-0.1.7-settings.png
+          test -s captures/Real.Island-Apple-0.1.8-expanded.png
+          test -s captures/Real.Island-Apple-0.1.8-settings.png
           kill "$pid"
           python3 - <<'PYTHON'
           from pathlib import Path
@@ -111,11 +114,22 @@ jobs:
           marker = "        configureMenu()"
           assert text.count(marker) == 1
           fixture = """
+                  if CommandLine.arguments.contains("--sample-editor") {
+                      model.open(.reminders)
+                  } else if CommandLine.arguments.contains("--sample-reminder") {
+                      let now = Date.now
+                      precondition(model.addReminder(title: "Полить растения", date: now.addingTimeInterval(1)))
+                      model.refreshReminders(now: now)
+                      precondition(model.reminderNotice == nil && model.reminders.count == 1)
+                      model.refreshReminders(now: now.addingTimeInterval(2))
+                      precondition(model.reminderNotice?.title == "Полить растения" && model.reminders.isEmpty)
+                  } else {
                   model.track = Track(player: .music, title: "Ночной эфир",
                                       artist: "Тестовый трек", isPlaying: true, artwork: nil)
                   model.levels = [0.36, 0.80, 0.62, 0.38, 0.24]
                   lastAudioFrame = ProcessInfo.processInfo.systemUptime + 60
                   model.open(.music)
+                  }
           """
           source.write_text(text.replace(marker, marker + fixture))
           PYTHON
@@ -133,10 +147,27 @@ jobs:
           done
           test -n "$pid"
           sleep 2
-          playing="$(xcrun swift find-window.swift "$pid" expanded)"
+          playing="$(xcrun swift find-window.swift "$pid" playing)"
           test -n "$playing"
-          screencapture -x -o -l "$playing" captures/Real.Island-Apple-0.1.7-playback.png
-          echo "::notice::Captured the compact player rendering a simulated playing track."
+          screencapture -x -o -l "$playing" captures/Real.Island-Apple-0.1.8-playback.png
+          echo "::notice::Captured the music notch and side card using test track and signal data."
+          kill "$pid"
+          sleep 1
+          open -n "$fixture_app" --args --sample-editor
+          sleep 2
+          pid="$(pgrep -x RealIslandApple)"
+          editor="$(xcrun swift find-window.swift "$pid" reminders)"
+          test -n "$editor"
+          screencapture -x -o -l "$editor" captures/Real.Island-Apple-0.1.8-reminders.png
+          kill "$pid"
+          sleep 1
+          open -n "$fixture_app" --args --sample-reminder
+          sleep 2
+          pid="$(pgrep -x RealIslandApple)"
+          banner="$(xcrun swift find-window.swift "$pid" banner)"
+          test -n "$banner"
+          screencapture -x -o -l "$banner" captures/Real.Island-Apple-0.1.8-banner.png
+          echo "::notice::Verified the scheduled reminder matured and captured its banner."
       - uses: actions/upload-artifact@v4
         if: always()
         with:
