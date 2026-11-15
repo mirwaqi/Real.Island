@@ -16,7 +16,14 @@ jobs:
           mkdir -p app
           ditto -x -k Real.Island-Mac.zip app
           bundle="$PWD/app/Real Island.app"
+          /usr/bin/codesign --force --deep --sign - --timestamp=none "$bundle"
           /usr/bin/codesign --verify --deep --strict --verbose=2 "$bundle"
+          mkdir -p repaired check
+          ditto -c -k --sequesterRsrc --keepParent "$bundle" repaired/Real.Island-Mac-1.0.0.zip
+          ditto -x -k repaired/Real.Island-Mac-1.0.0.zip check
+          bundle="$PWD/check/Real Island.app"
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "$bundle"
+          shasum -a 256 repaired/Real.Island-Mac-1.0.0.zip
           echo "::notice::Full bundle code signature verified."
           assessment="$(spctl --assess --type execute --verbose=2 "$bundle" 2>&1)" || true
           while IFS= read -r line; do
@@ -32,3 +39,9 @@ jobs:
           sleep 5
           kill -0 "$pid"
           echo "::notice::The downloaded, unquarantined Mac application launched and stayed running."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Real-Island-Mac-1.0.0-verified
+          path: repaired/Real.Island-Mac-1.0.0.zip
+          compression-level: 0
+          if-no-files-found: error
