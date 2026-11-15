@@ -9,12 +9,12 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 10
     steps:
-      - name: Build the ZIP distributed on GitHub Pages
+      - name: Build and test the corrected ZIP
         env:
-          SOURCE_URL: https://mirwaqi.github.io/Real.Island/Real.Island-Apple-0.1.1-Source.zip
+          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.2-Source.zip
         run: |
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
-          echo '79611aa2412ef6427f5a59f38315df691241376aeeec7b6ae8efdb12f3de2614  source.zip' | shasum -a 256 -c
+          echo '9a8ceeee64eec7ac4afb47434b323f5fb35647e7ecade678cdab7a3909ea3352  source.zip' | shasum -a 256 -c
           unzip -q source.zip
           set +e
           bash real-island-apple/build.sh > build.log 2>&1
