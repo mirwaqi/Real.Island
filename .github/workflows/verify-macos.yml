@@ -11,10 +11,10 @@ jobs:
     steps:
       - name: Build and test the candidate ZIP
         env:
-          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.4-Source.zip
+          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.5-Source.zip
         run: |
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
-          echo '32af40d71a72a5399e2d8e555e1f4d53c3f82d0ca9a552537867f9f27ef0ec9e  source.zip' | shasum -a 256 -c
+          echo '37333648ee8e9a9dfce05bd1741b9a66d697155014da09c9b635994d93fcfa94  source.zip' | shasum -a 256 -c
           unzip -q source.zip
           set +e
           bash real-island-apple/build.sh > build.log 2>&1
@@ -33,9 +33,9 @@ jobs:
           hdiutil verify "$image"
           hdiutil attach "$image" -nobrowse -readonly -mountpoint "$mount"
           /usr/bin/codesign --verify --deep --strict "$app_path"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.4
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.5
           test "$(/usr/bin/lipo -archs "$app_path/Contents/MacOS/RealIslandApple")" = arm64
-          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.4 and valid ad hoc signature."
+          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.5 and valid ad hoc signature."
           open -n "$app_path"
           pid=""
           for attempt in {1..10}; do
@@ -56,15 +56,20 @@ jobs:
               guard ($0[kCGWindowOwnerPID as String] as? Int) == owner,
                     let bounds = $0[kCGWindowBounds as String] as? [String: CGFloat],
                     let width = bounds["Width"], let height = bounds["Height"] else { return false }
-              let expanded = CommandLine.arguments.last == "expanded"
-              return expanded ? width >= 330 && height >= 120 :
-                  width >= 170 && width <= 220 && height >= 20 && height <= 100
+              let mode = CommandLine.arguments.last
+              switch mode {
+              case "expanded", "click-settings": return width >= 330 && (120...180).contains(height)
+              case "settings": return width >= 330 && height >= 235
+              default: return width == 160 && height == 22
+              }
           }
           if let id = island?[kCGWindowNumber as String] as? Int {
-              if CommandLine.arguments.last == "click",
+              if ["click", "click-settings"].contains(CommandLine.arguments.last ?? ""),
                  let bounds = island?[kCGWindowBounds as String] as? [String: CGFloat],
                  let x = bounds["X"], let y = bounds["Y"], let width = bounds["Width"], let height = bounds["Height"] {
-                  let center = CGPoint(x: x + width - 21, y: y + height / 2)
+                  let center = CommandLine.arguments.last == "click-settings"
+                      ? CGPoint(x: x + width - 30, y: y + 55)
+                      : CGPoint(x: x + width / 2, y: y + height / 2)
                   CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: center, mouseButton: .left)?
                       .post(tap: .cghidEventTap)
                   CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: center, mouseButton: .left)?
@@ -76,14 +81,23 @@ jobs:
           test -n "$window"
           echo "::notice::Window Server reports an on-screen Real.Island Apple panel."
           mkdir -p captures
-          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.4.png
-          test -s captures/Real.Island-Apple-0.1.4.png
+          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.5.png
+          test -s captures/Real.Island-Apple-0.1.5.png
           xcrun swift find-window.swift "$pid" click
           sleep 2
           expanded="$(xcrun swift find-window.swift "$pid" expanded)"
           if [[ -n "$expanded" ]]; then
-            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.4-expanded.png
-            echo "::notice::Clicking the dot opened the actual Real.Island Apple panel."
+            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.5-expanded.png
+            echo "::notice::Clicking the compact clock opened the actual app."
+            xcrun swift find-window.swift "$pid" click-settings
+            sleep 2
+            settings="$(xcrun swift find-window.swift "$pid" settings)"
+            if [[ -n "$settings" ]]; then
+              screencapture -x -o -l "$settings" captures/Real.Island-Apple-0.1.5-settings.png
+              echo "::notice::The settings button opened the actual settings panel."
+            else
+              echo "::warning::The runner could not open settings with a synthetic click."
+            fi
           else
             echo "::warning::The runner could not verify expanding the panel with a synthetic click."
           fi
