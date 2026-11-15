@@ -11,8 +11,8 @@ jobs:
     steps:
       - name: Download and verify the published app
         run: |
-          curl --fail --silent --show-error --location --retry 2             https://github.com/mirwaqi/Real.Island/releases/download/mac-v1.0.0/Real.Island-Mac.zip             --output Real.Island-Mac.zip
-          echo 'd0c76d157a9907eff09bc2a53dce090b3ad8ccb052a0528295290d0c864288d1  Real.Island-Mac.zip' | shasum -a 256 -c
+          curl --fail --silent --show-error --location --retry 2             https://github.com/mirwaqi/Real.Island/releases/download/mac-v1.0.0/Real.Island-Mac-candidate.zip             --output Real.Island-Mac.zip
+          echo '5da34a8d5cfffd549628508089f1ad13c352aecf001a398b08eed78625b34ccc  Real.Island-Mac.zip' | shasum -a 256 -c
           mkdir -p app
           ditto -x -k Real.Island-Mac.zip app
           bundle="$PWD/app/Real Island.app"
