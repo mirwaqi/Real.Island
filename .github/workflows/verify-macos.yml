@@ -150,6 +150,15 @@ jobs:
                   }
           """
           source.write_text(text.replace(marker, marker + fixture).replace(geometry, simulated + geometry))
+          view = source.with_name("IslandView.swift")
+          content = view.read_text()
+          marker = "        .environment(\\.colorScheme, .dark)"
+          assert content.count(marker) == 1
+          motion = "        .environment(\\.accessibilityReduceMotion, CommandLine.arguments.contains(\"--sample-notch\") ? false : reduceMotion)"
+          wave = "MusicNotchWave(levels: reduceMotion ? [] : model.levels)"
+          assert content.count(wave) == 1
+          view.write_text(content.replace(marker, marker + "\n" + motion).replace(
+              wave, "MusicNotchWave(levels: reduceMotion && !CommandLine.arguments.contains(\"--sample-notch\") ? [] : model.levels)"))
           PYTHON
           binary_dir="$(cd real-island-apple && xcrun swift build -c release --arch arm64 --show-bin-path)"
           (cd real-island-apple && xcrun swift build -c release --arch arm64)
