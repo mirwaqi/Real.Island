@@ -56,9 +56,21 @@ jobs:
               guard ($0[kCGWindowOwnerPID as String] as? Int) == owner,
                     let bounds = $0[kCGWindowBounds as String] as? [String: CGFloat],
                     let width = bounds["Width"], let height = bounds["Height"] else { return false }
-              return width >= 170 && width <= 400 && height >= 20 && height <= 100
+              let expanded = CommandLine.arguments.last == "expanded"
+              return expanded ? width >= 330 && height >= 120 :
+                  width >= 170 && width <= 220 && height >= 20 && height <= 100
           }
-          if let id = island?[kCGWindowNumber as String] as? Int { print(id) }
+          if let id = island?[kCGWindowNumber as String] as? Int {
+              if CommandLine.arguments.last == "click",
+                 let bounds = island?[kCGWindowBounds as String] as? [String: CGFloat],
+                 let x = bounds["X"], let y = bounds["Y"], let width = bounds["Width"], let height = bounds["Height"] {
+                  let center = CGPoint(x: x + width - 21, y: y + height / 2)
+                  CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: center, mouseButton: .left)?
+                      .post(tap: .cghidEventTap)
+                  CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: center, mouseButton: .left)?
+                      .post(tap: .cghidEventTap)
+              } else { print(id) }
+          }
           SWIFT
           window="$(xcrun swift find-window.swift "$pid")"
           test -n "$window"
@@ -66,6 +78,15 @@ jobs:
           mkdir -p captures
           screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.4.png
           test -s captures/Real.Island-Apple-0.1.4.png
+          xcrun swift find-window.swift "$pid" click
+          sleep 2
+          expanded="$(xcrun swift find-window.swift "$pid" expanded)"
+          if [[ -n "$expanded" ]]; then
+            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.4-expanded.png
+            echo "::notice::Clicking the dot opened the actual Real.Island Apple panel."
+          else
+            echo "::warning::The runner could not verify expanding the panel with a synthetic click."
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: Real-Island-Apple-actual-window
