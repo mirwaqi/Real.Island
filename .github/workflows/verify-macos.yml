@@ -60,6 +60,7 @@ jobs:
               switch mode {
               case "expanded", "click-settings": return width == 276 && height == 74
               case "settings": return width == 346 && height == 235
+              case "notch", "notch-crop": return width == 576 && height == 104
               case "reminders": return width == 346 && height == 254
               case "playing", "click-close": return width == 556 && height == 72
               case "hidden", "click-reopen": return width == 160 && height == 43
@@ -82,6 +83,10 @@ jobs:
                       .post(tap: .cghidEventTap)
                   CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: center, mouseButton: .left)?
                       .post(tap: .cghidEventTap)
+              } else if CommandLine.arguments.last == "notch-crop",
+                        let bounds = island?[kCGWindowBounds as String] as? [String: CGFloat],
+                        let x = bounds["X"], let y = bounds["Y"], let width = bounds["Width"] {
+                  print([Int(x) - 64, Int(y), Int(width) + 128, 170].map(String.init).joined(separator: ","))
               } else { print(id) }
           }
           SWIFT
@@ -136,7 +141,15 @@ jobs:
                   model.open(.music)
                   }
           """
-          source.write_text(text.replace(marker, marker + fixture))
+          geometry = "        if model.cutoutHeight != notch { model.cutoutHeight = notch }"
+          assert text.count(geometry) == 1
+          simulated = """        if CommandLine.arguments.contains("--sample-notch") {
+                      notchWidth = 180
+                      notch = 32
+                      top = screen.frame.maxY
+                  }
+          """
+          source.write_text(text.replace(marker, marker + fixture).replace(geometry, simulated + geometry))
           PYTHON
           binary_dir="$(cd real-island-apple && xcrun swift build -c release --arch arm64 --show-bin-path)"
           (cd real-island-apple && xcrun swift build -c release --arch arm64)
@@ -181,6 +194,19 @@ jobs:
           test -n "$banner"
           screencapture -x -o -l "$banner" captures/Real.Island-Apple-0.1.9-banner.png
           echo "::notice::Verified the scheduled reminder matured and captured its banner."
+          kill "$pid"
+          sleep 1
+          open -n "$fixture_app" --args --sample-notch
+          sleep 2
+          pid="$(pgrep -x RealIslandApple)"
+          notch="$(xcrun swift find-window.swift "$pid" notch)"
+          test -n "$notch"
+          screencapture -x -o -l "$notch" captures/Real.Island-Apple-0.1.9-notch-window.png
+          bounds="$(xcrun swift find-window.swift "$pid" notch-crop)"
+          test -n "$bounds"
+          screencapture -x -R"$bounds" captures/Real.Island-Apple-0.1.9-notch-desktop.png
+          test -s captures/Real.Island-Apple-0.1.9-notch-desktop.png
+          echo "::notice::Captured the actual app on macOS using simulated 180-by-32-point notch geometry."
       - uses: actions/upload-artifact@v4
         if: always()
         with:
