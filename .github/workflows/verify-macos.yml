@@ -11,10 +11,10 @@ jobs:
     steps:
       - name: Build and test the candidate ZIP
         env:
-          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.9-Source.zip
+          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.10-Source.zip
         run: |
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
-          echo 'c3736815273f3569cd7f978ce7c2dc7e2bce003240d5b26dd8f1b7ea976487ae  source.zip' | shasum -a 256 -c
+          echo '8cfd626bf4c69abdcf089d3536b60fa81411b4351911e9934fe29974e152172b  source.zip' | shasum -a 256 -c
           unzip -q source.zip
           set +e
           bash real-island-apple/build.sh > build.log 2>&1
@@ -33,9 +33,9 @@ jobs:
           hdiutil verify "$image"
           hdiutil attach "$image" -nobrowse -readonly -mountpoint "$mount"
           /usr/bin/codesign --verify --deep --strict "$app_path"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.9
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.10
           test "$(/usr/bin/lipo -archs "$app_path/Contents/MacOS/RealIslandApple")" = arm64
-          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.9 and valid ad hoc signature."
+          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.10 and valid ad hoc signature."
           open -n "$app_path"
           pid=""
           for attempt in {1..10}; do
@@ -94,19 +94,19 @@ jobs:
           test -n "$window"
           echo "::notice::Window Server reports an on-screen Real.Island Apple panel."
           mkdir -p captures
-          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.9.png
-          test -s captures/Real.Island-Apple-0.1.9.png
+          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.10.png
+          test -s captures/Real.Island-Apple-0.1.10.png
           xcrun swift find-window.swift "$pid" click
           sleep 2
           expanded="$(xcrun swift find-window.swift "$pid" expanded)"
           if [[ -n "$expanded" ]]; then
-            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.9-expanded.png
+            screencapture -x -o -l "$expanded" captures/Real.Island-Apple-0.1.10-expanded.png
             echo "::notice::Clicking the compact clock opened the actual app."
             xcrun swift find-window.swift "$pid" click-settings
             sleep 2
             settings="$(xcrun swift find-window.swift "$pid" settings)"
             if [[ -n "$settings" ]]; then
-              screencapture -x -o -l "$settings" captures/Real.Island-Apple-0.1.9-settings.png
+              screencapture -x -o -l "$settings" captures/Real.Island-Apple-0.1.10-settings.png
               echo "::notice::The settings button opened the actual settings panel."
             else
               echo "::warning::The runner could not open settings with a synthetic click."
@@ -114,8 +114,8 @@ jobs:
           else
             echo "::warning::The runner could not verify expanding the panel with a synthetic click."
           fi
-          test -s captures/Real.Island-Apple-0.1.9-expanded.png
-          test -s captures/Real.Island-Apple-0.1.9-settings.png
+          test -s captures/Real.Island-Apple-0.1.10-expanded.png
+          test -s captures/Real.Island-Apple-0.1.10-settings.png
           kill "$pid"
           python3 - <<'PYTHON'
           from pathlib import Path
@@ -173,12 +173,12 @@ jobs:
           sleep 2
           playing="$(xcrun swift find-window.swift "$pid" playing)"
           test -n "$playing"
-          screencapture -x -o -l "$playing" captures/Real.Island-Apple-0.1.9-playback.png
+          screencapture -x -o -l "$playing" captures/Real.Island-Apple-0.1.10-playback.png
           xcrun swift find-window.swift "$pid" click-close
           sleep 2
           hidden="$(xcrun swift find-window.swift "$pid" hidden)"
           test -n "$hidden"
-          screencapture -x -o -l "$hidden" captures/Real.Island-Apple-0.1.9-hidden.png
+          screencapture -x -o -l "$hidden" captures/Real.Island-Apple-0.1.10-hidden.png
           xcrun swift find-window.swift "$pid" click-reopen
           sleep 2
           test -n "$(xcrun swift find-window.swift "$pid" playing)"
@@ -190,7 +190,7 @@ jobs:
           pid="$(pgrep -x RealIslandApple)"
           editor="$(xcrun swift find-window.swift "$pid" reminders)"
           test -n "$editor"
-          screencapture -x -o -l "$editor" captures/Real.Island-Apple-0.1.9-reminders.png
+          screencapture -x -o -l "$editor" captures/Real.Island-Apple-0.1.10-reminders.png
           kill "$pid"
           sleep 1
           open -n "$fixture_app" --args --sample-reminder
@@ -198,7 +198,7 @@ jobs:
           pid="$(pgrep -x RealIslandApple)"
           banner="$(xcrun swift find-window.swift "$pid" banner)"
           test -n "$banner"
-          screencapture -x -o -l "$banner" captures/Real.Island-Apple-0.1.9-banner.png
+          screencapture -x -o -l "$banner" captures/Real.Island-Apple-0.1.10-banner.png
           echo "::notice::Verified the scheduled reminder matured and captured its banner."
           kill "$pid"
           sleep 1
@@ -207,11 +207,11 @@ jobs:
           pid="$(pgrep -x RealIslandApple)"
           notch="$(xcrun swift find-window.swift "$pid" notch)"
           test -n "$notch"
-          screencapture -x -o -l "$notch" captures/Real.Island-Apple-0.1.9-notch-window.png
+          screencapture -x -o -l "$notch" captures/Real.Island-Apple-0.1.10-notch-window.png
           bounds="$(xcrun swift find-window.swift "$pid" notch-crop)"
           test -n "$bounds"
-          screencapture -x -R"$bounds" captures/Real.Island-Apple-0.1.9-notch-desktop.png
-          test -s captures/Real.Island-Apple-0.1.9-notch-desktop.png
+          screencapture -x -R"$bounds" captures/Real.Island-Apple-0.1.10-notch-desktop.png
+          test -s captures/Real.Island-Apple-0.1.10-notch-desktop.png
           echo "::notice::Captured the actual app on macOS using simulated 180-by-32-point notch geometry."
       - uses: actions/upload-artifact@v4
         if: always()
