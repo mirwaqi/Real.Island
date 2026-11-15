@@ -9,12 +9,12 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 10
     steps:
-      - name: Build and test the published ZIP
+      - name: Build and test the candidate ZIP
         env:
-          SOURCE_URL: https://mirwaqi.github.io/Real.Island/Real.Island-Apple-0.1.3-Source.zip
+          SOURCE_URL: https://raw.githubusercontent.com/mirwaqi/Real.Island/check/macos-011/Real.Island-Apple-0.1.4-Source.zip
         run: |
           curl --fail --silent --show-error --location "$SOURCE_URL" --output source.zip
-          echo 'd8e9baa42110242be8b2edee005337f02e116b84b85a73165a978fc64ba05b2e  source.zip' | shasum -a 256 -c
+          echo '32af40d71a72a5399e2d8e555e1f4d53c3f82d0ca9a552537867f9f27ef0ec9e  source.zip' | shasum -a 256 -c
           unzip -q source.zip
           set +e
           bash real-island-apple/build.sh > build.log 2>&1
@@ -24,33 +24,50 @@ jobs:
             echo "::notice::$problem"
           done
           exit "$build_status"
-      - name: Verify disk image and launch the app
+      - name: Open the app and capture its real window
         run: |
+          trap 'echo "::error::macOS smoke test stopped at: $BASH_COMMAND"' ERR
           image="$PWD/real-island-apple/dist/Real.Island Apple.dmg"
           mount="$(mktemp -d)"
-          pid=""
-          cleanup() {
-            if [[ -n "$pid" ]]; then kill "$pid" 2>/dev/null || true; fi
-            hdiutil detach "$mount" >/dev/null 2>&1 || true
-            rmdir "$mount"
-          }
-          trap cleanup EXIT
+          app_path="$mount/Real.Island Apple.app"
           hdiutil verify "$image"
           hdiutil attach "$image" -nobrowse -readonly -mountpoint "$mount"
-          app="$mount/Real.Island Apple.app"
-          /usr/bin/codesign --verify --deep --strict --verbose=2 "$app"
-          /usr/bin/codesign -dv "$app" 2>&1 | grep '^Signature='
-          version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")
-          test "$version" = 0.1.3
-          /usr/bin/lipo -verify_arch arm64 "$app/Contents/MacOS/RealIslandApple"
-          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.3 and valid ad hoc signature."
-          open -n "$app"
+          /usr/bin/codesign --verify --deep --strict "$app_path"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")" = 0.1.4
+          test "$(/usr/bin/lipo -archs "$app_path/Contents/MacOS/RealIslandApple")" = arm64
+          echo "::notice::Verified DMG integrity, arm64 app, version 0.1.4 and valid ad hoc signature."
+          open -n "$app_path"
+          pid=""
           for attempt in {1..10}; do
             pid="$(pgrep -x RealIslandApple || true)"
             [[ -n "$pid" ]] && break
             sleep 1
           done
           test -n "$pid"
-          sleep 12
+          sleep 5
           kill -0 "$pid"
-          echo "::notice::Launch Services started Real.Island Apple and the same process stayed alive for 12 seconds."
+          echo "::notice::Launch Services started the actual Real.Island Apple app."
+          cat > find-window.swift <<'SWIFT'
+          import CoreGraphics
+          let owner = Int(CommandLine.arguments[1])!
+          let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+              as? [[String: Any]] ?? []
+          let island = windows.first {
+              guard ($0[kCGWindowOwnerPID as String] as? Int) == owner,
+                    let bounds = $0[kCGWindowBounds as String] as? [String: CGFloat],
+                    let width = bounds["Width"], let height = bounds["Height"] else { return false }
+              return width >= 170 && width <= 400 && height >= 20 && height <= 100
+          }
+          if let id = island?[kCGWindowNumber as String] as? Int { print(id) }
+          SWIFT
+          window="$(xcrun swift find-window.swift "$pid")"
+          test -n "$window"
+          echo "::notice::Window Server reports an on-screen Real.Island Apple panel."
+          mkdir -p captures
+          screencapture -x -o -l "$window" captures/Real.Island-Apple-0.1.4.png
+          test -s captures/Real.Island-Apple-0.1.4.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Real-Island-Apple-actual-window
+          path: captures/*.png
+          if-no-files-found: error
