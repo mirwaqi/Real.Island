@@ -1,0 +1,7 @@
+{
+  "name": "real-island",
+  "productName": "Real Island",
+  "version": "1.0.1",
+  "main": "main.js",
+  "description": "Остров с плеером для MacBook с вырезом"
+}

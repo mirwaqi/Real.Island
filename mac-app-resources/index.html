@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Real Island</title>
+<style>
+:root { --bass: #ff3b40; --muted: #8e8e93; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: transparent; overflow: hidden; color: #fff;
+  font: 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  -webkit-user-select: none; user-select: none; cursor: default; -webkit-font-smoothing: antialiased; }
+#stage { position: absolute; top: 0; left: 0; display: inline-block; }
+.pill { background: #000; border-radius: 3px 3px 16px 16px; overflow: hidden; }
+.pill.collapsed { border-radius: 3px 3px 10px 10px; }
+.hidden { display: none !important; }
+button { all: unset; cursor: pointer; }
+.r1 { display: flex; align-items: center; padding: 0 12px; }
+.clock { flex: 1; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 4px 0; }
+.gap { flex: none; }
+.bars { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 2.5px; height: 18px; }
+.bars i { display: block; width: 2.5px; height: 3px; border-radius: 1.25px; background: var(--bass); }
+.r2 { height: 30px; padding: 0 12px 3px; position: relative; display: flex; align-items: center; justify-content: space-between; }
+.src { width: 20px; height: 20px; border-radius: 5.5px; background: #383838; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.src img { width: 100%; height: 100%; object-fit: contain; }
+.ctrls { position: absolute; left: 0; right: 0; top: 0; bottom: 3px; display: flex; align-items: center; justify-content: center; gap: 2px; pointer-events: none; }
+.ctrls button { pointer-events: auto; height: 24px; display: flex; align-items: center; justify-content: center; transition: transform .12s, opacity .12s; }
+.ctrls button:active, .menu:active, .src:active { transform: scale(.88); opacity: .55; }
+.ctrls svg, .menu svg { fill: #fff; display: block; }
+.side { width: 26px; } .mid { width: 30px; }
+.menu { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; transition: transform .12s, opacity .12s; }
+.r3 { height: 16px; padding: 0 18px 1px; display: flex; justify-content: center; align-items: flex-start; gap: 5px; white-space: nowrap; overflow: hidden; }
+.r3 b { font-size: 10.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.r3 span { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; min-width: 0; }
+.nApp { flex: 1; font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
+.nRight { flex: 1; }
+.nBody { display: flex; gap: 10px; padding: 4px 14px 12px; align-items: flex-start; cursor: pointer; }
+.nIcon { width: 30px; height: 30px; border-radius: 8px; background: #383838; overflow: hidden; flex: none; display: flex; align-items: center; justify-content: center; }
+.nIcon img { width: 100%; height: 100%; object-fit: contain; }
+.nText { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.nText b { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nText span { font-size: 11px; color: #aeaeb2; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.scLogo { width: 100%; height: 100%; background: #ff5500; display: flex; align-items: center; justify-content: center; gap: 1.5px; }
+.scLogo i { display: block; width: 2px; border-radius: 1px; background: #fff; }
+.callBody { display: flex; align-items: center; gap: 10px; padding: 4px 12px 12px 14px; }
+.callIcon { position: relative; width: 36px; height: 36px; flex: none; }
+.callIcon .nIcon { width: 36px; height: 36px; border-radius: 9px; }
+.callBadge { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; border-radius: 50%; background: #30d158; border: 2px solid #000; display: flex; align-items: center; justify-content: center; animation: ring 1s ease-in-out infinite; }
+.callBadge svg { fill: #fff; display: block; }
+@keyframes ring { 0%,100% { transform: rotate(0) scale(1); } 20% { transform: rotate(-16deg) scale(1.1); } 40% { transform: rotate(16deg) scale(1.1); } 60% { transform: rotate(-10deg); } 80% { transform: rotate(10deg); } }
+.callText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.callText b { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.callText span { font-size: 11px; color: #30d158; }
+.callBtns { display: flex; gap: 6px; flex: none; }
+.callBtn { height: 26px; padding: 0 11px; border-radius: 13px; background: #30d158; color: #000; font-size: 12px; font-weight: 600; display: flex; align-items: center; }
+.callBtn.x { background: #3a3a3c; color: #fff; padding: 0 9px; }
+.callBtn:active { opacity: .6; }
+.compactClock { height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+#settings { width: 346px; background: #000; border-radius: 3px 3px 22px 22px; padding: 0 14px 16px; }
+#settings .row { display: flex; align-items: center; justify-content: space-between; min-height: 26px; margin-top: 10px; font-size: 13px; }
+#settings h1 { font-size: 15px; font-weight: 600; margin: 0; }
+#settings .head { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+#settings .link { color: #0a84ff; font-size: 13px; }
+#settings .sub { color: var(--muted); font-size: 11px; margin-top: 6px; line-height: 1.35; }
+.tools { display: flex; gap: 8px; margin-top: 12px; }
+.tool { color: #eee; background: #24242b; padding: 7px 10px; border-radius: 8px; font-size: 12px; }
+.tool:hover { background: #33333d; }
+.tool:disabled { opacity: .55; cursor: default; }
+.utility { width: 346px; background: #000; border-radius: 3px 3px 18px 18px; padding: 0 14px 14px; }
+.utility .head { display:flex; align-items:center; justify-content:space-between; padding-block: 5px 9px; }
+.utility h1 { font-size: 15px; margin: 0; }
+.utility p { color: #aeafb9; font-size: 12px; margin: 6px 0; line-height: 1.4; }
+.utility form { display: flex; gap: 7px; margin-block: 9px 6px; }
+.utility input { min-width: 0; flex: 1; color: white; background: #1d1d24; border: 1px solid #42434d; border-radius: 8px; padding: 7px 9px; font: inherit; user-select: text; }
+.utility input:focus-visible, .tool:focus-visible { outline: 2px solid #aaa0ff; outline-offset: 2px; }
+.weather-card { border-radius: 10px; padding: 9px; background: #1a1a22; }
+.weather-card strong { display:block; margin: 5px 0 3px; }
+.weather-options { display: grid; gap: 5px; }
+.weather-options button { display: block; text-align: left; padding: 6px 8px; }
+.weather-options small { display: block; color: #adadb8; }
+.weather-toggle { display:flex; gap:8px; align-items:center; margin-top:9px; font-size:12px; }
+.weather-toggle input { flex:none; appearance:auto; }
+.permissions-actions { display: grid; gap: 7px; margin-block: 8px; }
+.switch { width: 38px; height: 22px; border-radius: 11px; background: #3a3a3c; position: relative; transition: background .15s; flex: none; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.switch.on { background: #30d158; } .switch.on::after { transform: translateX(16px); }
+.swatches { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.sw { width: 17px; height: 17px; border-radius: 50%; flex: none; }
+.sw.sel { outline: 2px solid #fff; outline-offset: 2px; }
+.swatches input[type=color] { width: 26px; height: 20px; border: 0; padding: 0; background: none; margin-left: auto; }
+input[type=range] { width: 130px; }
+.warn { margin-top: 10px; padding: 8px 10px; border-radius: 10px; background: #2a1d00; color: #ffd60a; font-size: 11px; line-height: 1.35; }
+.quit { color: #ff453a; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="compact" class="pill hidden"><div id="cTop"></div><div class="compactClock" id="cClock"></div></div>
+  <div id="call" class="pill hidden">
+    <div class="r1" id="cr1"><span class="nApp" id="cApp"></span><div class="gap" id="cgap"></div><div class="nRight"></div></div>
+    <div class="callBody">
+      <div class="callIcon"><div class="nIcon" id="cIcon"></div><div class="callBadge"><svg width="9" height="9" viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg></div></div>
+      <div class="callText"><b id="cName"></b><span id="cKind"></span></div>
+      <div class="callBtns"><button class="callBtn" id="cOpen">Открыть</button><button class="callBtn x" id="cHide" aria-label="Скрыть">✕</button></div>
+    </div>
+  </div>
+  <div id="notif" class="pill hidden">
+    <div class="r1" id="nr1"><span class="nApp" id="nApp"></span><div class="gap" id="ngap"></div><div class="nRight"></div></div>
+    <div class="nBody" id="nBody"><div class="nIcon" id="nIcon"></div><div class="nText"><b id="nTitle"></b><span id="nText"></span></div></div>
+  </div>
+  <div id="player" class="pill hidden">
+    <div class="r1" id="r1">
+      <button class="clock" id="clock"></button>
+      <div class="gap" id="gap"></div>
+      <div class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div id="body">
+      <div class="r2">
+        <button class="src" id="src" title=""></button>
+        <div class="ctrls">
+          <button class="side" id="prev" aria-label="Предыдущий трек"><svg width="11" height="11" viewBox="0 0 24 24"><path d="M5 4h2.6v16H5zM20 4v16L8.6 12z"/></svg></button>
+          <button class="mid" id="toggle" aria-label="Пауза"></button>
+          <button class="side" id="next" aria-label="Следующий трек"><svg width="11" height="11" viewBox="0 0 24 24"><path d="M16.4 4H19v16h-2.6zM4 4v16l11.4-8z"/></svg></button>
+        </div>
+        <button class="menu" id="menu" aria-label="Меню и настройки"><svg width="14" height="14" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg></button>
+      </div>
+      <div class="r3" id="r3"><b id="title"></b><span id="artist"></span></div>
+    </div>
+  </div>
+  <div id="settings" class="hidden">
+    <div id="sTop"></div>
+    <div class="head"><h1>Настройки</h1><button class="link" id="done">Готово</button></div>
+    <div class="tools"><button class="tool" id="openWeather">Погода</button><button class="tool" id="openPermissions">Разрешения macOS</button></div>
+    <div class="row"><span>Показывать название песни</span><button class="switch" id="swTitle"></button></div>
+    <div class="row" style="margin-top:14px"><span>Цвет басса</span><button class="link" id="resetColor" style="color:#8e8e93">Сбросить</button></div>
+    <div class="swatches" id="swatches"></div>
+    <div class="row"><span>Ширина выреза камеры</span><span><input type="range" id="notchW" min="140" max="260" step="1"> <span id="notchWv" style="color:#8e8e93;font-size:12px"></span></span></div>
+    <div class="row"><span>Уведомления на острове</span><button class="switch" id="swNotif"></button></div>
+    <div class="row"><span>Звонки на острове</span><button class="switch" id="swCalls"></button></div>
+    <div class="row"><span>SoundCloud из браузера</span><button class="switch" id="swSc"></button></div>
+    <div class="row"><span>Запускать при входе в систему</span><button class="switch" id="swLogin"></button></div>
+    <div id="warn" class="warn hidden">Разреши управление плеером: Системные настройки → Конфиденциальность и безопасность → Автоматизация → Real Island → Музыка, Spotify, браузер.</div>
+    <div id="warnNotif" class="warn hidden">Чтобы остров видел уведомления, включи Real Island в Системные настройки → Конфиденциальность и безопасность → Полный доступ к диску (если его нет в списке, нажми + и выбери программу), затем выйди из Real Island и открой снова. <button class="link" id="openPrivacy" style="display:inline">Открыть настройки</button></div>
+    <div id="warnSc" class="warn hidden">Чтобы кнопки управляли SoundCloud: в Chrome меню Вид → Разработчик → «Разрешить JavaScript из событий Apple Events»; в Safari меню Разработка → «Разрешить JavaScript из событий Apple Events».</div>
+    <div class="row"><button class="link" id="demoNotif">Показать пример уведомления</button><button class="link" id="demoCall">Пример звонка</button></div>
+    <div class="row"><button class="quit" id="quit">Выйти из Real Island</button></div>
+    <div class="sub">Остров показывает Apple Music, Spotify и SoundCloud в браузере, а входящие звонки Discord, Telegram, WhatsApp, Viber, Zoom, Teams, Skype, Signal, FaceTime и других, если программа присылает уведомление о звонке. Полоски басса — анимация, пока играет музыка. Обычные баннеры macOS при этом остаются, их можно выключить в настройках уведомлений.</div>
+  </div>
+  <section class="utility hidden" id="weatherPanel" aria-labelledby="weatherHeading">
+    <div id="weatherTop"></div>
+    <div class="head"><h1 id="weatherHeading">Погода</h1><button class="tool" id="weatherBack">Назад</button></div>
+    <div class="weather-card">
+      <div id="weatherCity"></div>
+      <strong id="weatherNow"></strong>
+      <p id="weatherDetails"></p>
+    </div>
+    <form id="weatherForm">
+      <input id="weatherQuery" maxlength="100" placeholder="Город или индекс" aria-label="Город или индекс" autocomplete="off">
+      <button class="tool" id="weatherSearch" type="submit">Найти</button>
+    </form>
+    <div id="weatherResults" class="weather-options"></div>
+    <p id="weatherStatus" role="status"></p>
+    <label class="weather-toggle"><input type="checkbox" id="weatherNotices"> Показывать сводку каждые 40 минут</label>
+    <div class="tools"><button class="tool" id="weatherRefresh">Обновить прогноз</button></div>
+    <p>Данные Open-Meteo</p>
+  </section>
+  <section class="utility hidden" id="permissionsPanel" aria-labelledby="permissionsHeading">
+    <div id="permissionsTop"></div>
+    <div class="head"><h1 id="permissionsHeading">Разрешения macOS</h1><button class="tool" id="permissionsBack">Назад</button></div>
+    <div class="permissions-actions">
+      <button class="tool" id="allowNotifications">Разрешить уведомления и звонки</button>
+      <button class="tool" id="allowAutomation">Разрешить управление музыкой</button>
+    </div>
+    <p>Кнопки открывают нужные разделы macOS. Подтверди доступ для Real Island в открывшемся окне.</p>
+    <p id="permissionsStatus" role="status"></p>
+  </section>
+</div>
+<script src="renderer.js"></script>
+</body>
+</html>

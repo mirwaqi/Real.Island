@@ -1,4 +1,4 @@
-name: Verify published Mac application
+name: Build and photograph Real Island Mac
 on:
   push:
     branches: ['check/mac-zip-100']
@@ -7,41 +7,72 @@ permissions:
 jobs:
   verify:
     runs-on: macos-26
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
-      - name: Download and verify the published app
+      - uses: actions/checkout@v4
+      - name: Package, sign and launch 1.0.1
         run: |
-          curl --fail --silent --show-error --location --retry 2             https://github.com/mirwaqi/Real.Island/releases/download/mac-v1.0.0/Real.Island-Mac-site-candidate.zip             --output Real.Island-Mac.zip
-          echo '0fbe657823eb9ec3b275e288b6d99d73941f6d8320438cc2b2e871466146bb04  Real.Island-Mac.zip' | shasum -a 256 -c
-          mkdir -p app
-          ditto -x -k Real.Island-Mac.zip app
+          set -euo pipefail
+          curl -fsSL --retry 2             https://github.com/mirwaqi/Real.Island/releases/download/mac-v1.0.0/Real.Island-Mac.zip             -o base.zip
+          echo '76feabd56dbba959a6593a33aafc42f87c5357c878c0d0f75bf3fb49b0b50419  base.zip' | shasum -a 256 -c
+          mkdir -p app verified
+          ditto -x -k base.zip app
           bundle="$PWD/app/Real Island.app"
-          /usr/bin/codesign --force --deep --sign - --timestamp=none "$bundle"
-          /usr/bin/codesign --verify --deep --strict --verbose=2 "$bundle"
-          mkdir -p repaired check
-          ditto -c -k --sequesterRsrc --keepParent "$bundle" repaired/Real.Island-Mac-1.0.0.zip
-          ditto -x -k repaired/Real.Island-Mac-1.0.0.zip check
-          bundle="$PWD/check/Real Island.app"
-          /usr/bin/codesign --verify --deep --strict --verbose=2 "$bundle"
-          shasum -a 256 repaired/Real.Island-Mac-1.0.0.zip
-          echo "::notice::Full bundle code signature verified."
-          assessment="$(spctl --assess --type execute --verbose=2 "$bundle" 2>&1)" || true
-          while IFS= read -r line; do
-            echo "::notice::Gatekeeper: $line"
-          done <<< "$assessment"
-          open -n "$bundle"
+          resources="$bundle/Contents/Resources/app"
+          for file in index.html main.js preload.js renderer.js weather.js package.json; do
+            cp "mac-app-resources/$file" "$resources/$file"
+          done
+          for file in main.js preload.js renderer.js weather.js; do node --check "$resources/$file"; done
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleVersion 1.0.1' "$bundle/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString 1.0.1' "$bundle/Contents/Info.plist"
+          codesign --force --deep --sign - --timestamp=none "$bundle"
+          codesign --verify --deep --strict "$bundle"
+          ditto -c -k --sequesterRsrc --keepParent "$bundle" verified/Real.Island-Mac-1.0.1.zip
+          shasum -a 256 verified/Real.Island-Mac-1.0.1.zip
+          mkdir -p install-test
+          ditto -x -k verified/Real.Island-Mac-1.0.1.zip install-test
+          test_bundle="$PWD/install-test/Real Island.app"
+          codesign --verify --deep --strict "$test_bundle"
+          open -n "$test_bundle"
           for attempt in {1..10}; do
-            pid="$(pgrep -f "$bundle/Contents/MacOS/Electron" | head -1 || true)"
+            pid="$(pgrep -f "$test_bundle/Contents/MacOS/Electron" | head -1 || true)"
             [[ -n "$pid" ]] && break
             sleep 1
           done
           test -n "$pid"
-          sleep 5
+          sleep 4
           kill -0 "$pid"
-          echo "::notice::The downloaded, unquarantined Mac application launched and stayed running."
+          kill "$pid"
+          echo "::notice::Real Island 1.0.1 opened from the packaged ZIP on macOS."
+      - name: Capture features in the native renderer
+        run: |
+          set -euo pipefail
+          mkdir -p photo-app captures
+          ditto "$PWD/app/Real Island.app" "$PWD/photo-app/Real Island.app"
+          bundle="$PWD/photo-app/Real Island.app"
+          resources="$bundle/Contents/Resources/app"
+          cp mac-app-resources/report-fixture.cjs "$resources"
+          python3 - "$resources/main.js" <<'PYTHON'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          text = path.read_text()
+          text = text.replace("  createWindow();", "  createWindow();\n  require('./report-fixture.cjs')(win, process.env.ISLAND_PHOTO_OUTPUT);\n  return;", 1)
+          path.write_text(text)
+          PYTHON
+          codesign --force --deep --sign - --timestamp=none "$bundle"
+          ISLAND_PHOTO_OUTPUT="$PWD/captures" "$bundle/Contents/MacOS/Electron" --user-data-dir="$RUNNER_TEMP/island-report"
+          test "$(find captures -name '*.png' | wc -l | tr -d ' ')" = 10
+          cat captures/forecast-api.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Real-Island-Mac-1.0.0-verified
-          path: repaired/Real.Island-Mac-1.0.0.zip
+          name: Real-Island-Mac-1.0.1
+          path: verified/Real.Island-Mac-1.0.1.zip
           compression-level: 0
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real-Island-Mac-1.0.1-photos
+          path: captures
+          if-no-files-found: warn
